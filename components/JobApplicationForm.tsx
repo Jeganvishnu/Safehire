@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { 
-  Building2, 
-  User, 
-  Mail, 
-  Phone, 
-  FileText, 
-  UploadCloud, 
-  ArrowLeft, 
-  CheckCircle2, 
+import {
+  Building2,
+  User,
+  Mail,
+  Phone,
+  FileText,
+  UploadCloud,
+  ArrowLeft,
+  CheckCircle2,
   ShieldCheck,
   X
 } from 'lucide-react';
@@ -58,7 +58,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job, onCancel, 
       alert('Please upload your resume (PDF).');
       return;
     }
-    
+
     setIsSubmitting(true);
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -67,10 +67,10 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job, onCancel, 
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 py-12">
-      
+
       {/* Header / Back */}
       <div className="w-full max-w-2xl mb-6">
-        <button 
+        <button
           onClick={onCancel}
           className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm"
         >
@@ -80,7 +80,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job, onCancel, 
       </div>
 
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        
+
         {/* Job Summary Header */}
         <div className="bg-gradient-to-r from-emerald-600 to-blue-600 p-8 text-white">
           <h1 className="text-2xl font-bold mb-2">Apply for {job.title}</h1>
@@ -100,7 +100,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job, onCancel, 
         {/* Form */}
         <div className="p-8 md:p-10">
           <form onSubmit={handleSubmit} className="space-y-6">
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Name */}
               <div className="space-y-1.5">
@@ -172,13 +172,13 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job, onCancel, 
                 Resume / CV (PDF Only) <span className="text-red-500">*</span>
               </label>
               <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${formData.resume ? 'border-emerald-400 bg-emerald-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'}`}>
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   accept="application/pdf"
                   onChange={handleFileChange}
-                  className="hidden" 
+                  className="hidden"
                   id="resume-upload"
-                  required 
+                  required
                 />
                 <label htmlFor="resume-upload" className="cursor-pointer flex flex-col items-center justify-center gap-2">
                   {formData.resume ? (
@@ -203,31 +203,31 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job, onCancel, 
             </div>
 
             {/* Submit Actions */}
-            <div className="pt-4 flex gap-4">
-               <button
-                 type="button"
-                 onClick={onCancel}
-                 className="flex-1 py-3.5 border border-gray-200 text-gray-600 font-bold rounded-lg hover:bg-gray-50 transition-colors"
-                 disabled={isSubmitting}
-               >
-                 Cancel
-               </button>
-               <button
-                 type="submit"
-                 disabled={isSubmitting}
-                 className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-               >
-                 {isSubmitting ? (
-                   <>Processing...</>
-                 ) : (
-                   <>
-                     Submit Application
-                     <CheckCircle2 size={18} />
-                   </>
-                 )}
-               </button>
+            <div className="pt-4 flex flex-col sm:flex-row gap-4">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="w-full sm:flex-1 py-3.5 border border-gray-200 text-gray-600 font-bold rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full sm:flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>Processing...</>
+                ) : (
+                  <>
+                    Submit Application
+                    <CheckCircle2 size={18} />
+                  </>
+                )}
+              </button>
             </div>
-            
+
             <p className="text-center text-xs text-gray-400 flex items-center justify-center gap-1.5 mt-4">
               <ShieldCheck size={12} className="text-emerald-500" />
               Your data is shared securely only with {job.companyName}
