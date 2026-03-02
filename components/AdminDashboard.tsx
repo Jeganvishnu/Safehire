@@ -28,7 +28,7 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
-   const [activeTab, setActiveTab] = useState<'overview' | 'verification' | 'job-review' | 'users'>('overview');
+   const [activeTab, setActiveTab] = useState<'overview' | 'verification' | 'job-review' | 'users' | 'reports' | 'settings'>('overview');
    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
    const [jobs, setJobs] = useState<Job[]>([]);
    const [totalUsers, setTotalUsers] = useState(0); // Mock or fetch if you have users collection read access
@@ -131,8 +131,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
       <button
          onClick={() => setActiveTab(id)}
          className={`whitespace-nowrap md:w-full flex flex-col md:flex-row items-center ${isSidebarOpen ? 'md:justify-start' : 'md:justify-center'} justify-center gap-1 md:gap-3 px-3 py-2 md:py-3 rounded-xl text-[10px] md:text-sm font-medium transition-colors ${activeTab === id
-               ? 'bg-emerald-50 text-emerald-700 md:rounded-lg md:border-l-4 border-emerald-500 ring-1 ring-emerald-100 md:ring-0'
-               : 'text-gray-600 hover:bg-gray-50'
+            ? 'bg-emerald-50 text-emerald-700 md:rounded-lg md:border-l-4 border-emerald-500 ring-1 ring-emerald-100 md:ring-0'
+            : 'text-gray-600 hover:bg-gray-50'
             }`}
       >
          <Icon size={20} className="w-5 h-5 md:w-5 md:h-5 shrink-0" />
@@ -231,8 +231,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
 
                {isSidebarOpen && <div className="hidden md:block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2 mt-6">Management</div>}
                <SidebarItem icon={Users} label="Users" id="users" />
-               <SidebarItem icon={BarChart3} label="Reports" id="overview" />
-               <SidebarItem icon={Settings} label="Settings" id="overview" />
+               <SidebarItem icon={BarChart3} label="Reports" id="reports" />
+               <SidebarItem icon={Settings} label="Settings" id="settings" />
             </div>
 
             <div className={`p-2 md:p-4 border-l md:border-l-0 md:border-t border-gray-100 flex items-center shrink-0 ${!isSidebarOpen && 'md:justify-center'}`}>
@@ -601,6 +601,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
                   <h2 className="text-xl font-bold mb-4">User Management</h2>
                   <p className="text-gray-500">Manage all {totalUsers} registered users, roles, and permissions.</p>
+               </div>
+            )}
+
+            {activeTab === 'reports' && (
+               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+                  <h2 className="text-xl font-bold mb-4">Reports & Analytics</h2>
+                  <p className="text-gray-500">View detailed system reports, usage statistics, and analytics data.</p>
+               </div>
+            )}
+
+            {activeTab === 'settings' && (
+               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+                  <h2 className="text-xl font-bold mb-4">Platform Settings</h2>
+                  <p className="text-gray-500">Configure global platform settings, API keys, and integrations.</p>
                </div>
             )}
 

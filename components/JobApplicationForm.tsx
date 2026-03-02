@@ -48,6 +48,11 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job, onCancel, 
         e.target.value = ''; // Reset input
         return;
       }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File is too large. Please upload a PDF under 5MB.');
+        e.target.value = ''; // Reset input
+        return;
+      }
       setFormData(prev => ({ ...prev, resume: file }));
     }
   };

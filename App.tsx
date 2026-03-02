@@ -13,7 +13,7 @@ import CompanyProfilePage from './components/CompanyProfilePage'; // Imported
 import { auth, db } from './firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, onSnapshot, addDoc, query, orderBy, getDoc, doc } from 'firebase/firestore';
-
+import { uploadResume } from './utils/cloudinaryUpload';
 // --- Shared Types ---
 export interface Job {
   id: string;
@@ -54,6 +54,7 @@ export interface Application {
   appliedDate: string;
   status: 'Pending' | 'Reviewed' | 'Shortlisted' | 'Rejected';
   experience: string;
+  resumeUrl?: string; // New field for downloading/viewing
   createdAt?: string;
 }
 
@@ -62,11 +63,11 @@ const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<'job-seeker' | 'employer' | 'admin'>('job-seeker');
   const [currentUser, setCurrentUser] = useState<any>(null);
-  
+
   // Shared Data State
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  
+
   // Error State
   const [dbError, setDbError] = useState<string | null>(null);
 
@@ -91,9 +92,9 @@ const App: React.FC = () => {
             setCurrentUser(user);
             setUserRole(userData.role || 'job-seeker');
           } else {
-             // Fallback if doc doesn't exist yet
-             setIsLoggedIn(true);
-             setCurrentUser(user);
+            // Fallback if doc doesn't exist yet
+            setIsLoggedIn(true);
+            setCurrentUser(user);
           }
         } catch (error: any) {
           console.error("Error fetching user data:", error);
@@ -113,8 +114,8 @@ const App: React.FC = () => {
   // --- 2. Realtime Jobs Listener ---
   useEffect(() => {
     const q = query(collection(db, "jobs"), orderBy("postedDate", "desc"));
-    
-    const unsubscribe = onSnapshot(q, 
+
+    const unsubscribe = onSnapshot(q,
       (snapshot) => {
         const jobsData = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -140,45 +141,45 @@ const App: React.FC = () => {
   const navigateToView = (view: typeof currentView) => {
     // 1. Admin (Super User) Access: Can go anywhere
     if (userRole === 'admin') {
-        setCurrentView(view);
-        return;
+      setCurrentView(view);
+      return;
     }
 
     // 2. Guest Access (Not Logged In)
     if (!isLoggedIn) {
-        const protectedViews = ['employer-dashboard', 'my-applications', 'admin-dashboard'];
-        if (protectedViews.includes(view)) {
-            setCurrentView('login');
-            return;
-        }
-        setCurrentView(view);
+      const protectedViews = ['employer-dashboard', 'my-applications', 'admin-dashboard'];
+      if (protectedViews.includes(view)) {
+        setCurrentView('login');
         return;
+      }
+      setCurrentView(view);
+      return;
     }
 
     // 3. Employer Strict Access
     if (userRole === 'employer') {
-        // Employers strictly blocked from Job Seeker pages ('jobs', 'my-applications') and Admin
-        if (view === 'jobs' || view === 'my-applications') {
-            alert("Access Denied: Please login as a Job Seeker to view jobs.");
-            return;
-        }
-        if (view === 'admin-dashboard') {
-             alert("Access Denied: Admin privileges required.");
-             return;
-        }
+      // Employers strictly blocked from Job Seeker pages ('jobs', 'my-applications') and Admin
+      if (view === 'jobs' || view === 'my-applications') {
+        alert("Access Denied: Please login as a Job Seeker to view jobs.");
+        return;
+      }
+      if (view === 'admin-dashboard') {
+        alert("Access Denied: Admin privileges required.");
+        return;
+      }
     }
 
     // 4. Job Seeker Strict Access
     if (userRole === 'job-seeker') {
-        // Job Seekers strictly blocked from Employer Dashboard and Admin
-        if (view === 'employer-dashboard') {
-             alert("Access Denied: Please login as an Employer to access the dashboard.");
-             return;
-        }
-        if (view === 'admin-dashboard') {
-             alert("Access Denied: Admin privileges required.");
-             return;
-        }
+      // Job Seekers strictly blocked from Employer Dashboard and Admin
+      if (view === 'employer-dashboard') {
+        alert("Access Denied: Please login as an Employer to access the dashboard.");
+        return;
+      }
+      if (view === 'admin-dashboard') {
+        alert("Access Denied: Admin privileges required.");
+        return;
+      }
     }
 
     setCurrentView(view);
@@ -216,8 +217,8 @@ const App: React.FC = () => {
     }
     // Strict block for employers attempting to apply
     if (userRole === 'employer' && userRole !== 'admin') {
-        alert("Employers cannot apply for jobs. Please register as a Job Seeker.");
-        return;
+      alert("Employers cannot apply for jobs. Please register as a Job Seeker.");
+      return;
     }
 
     const job = jobs.find(j => j.id === jobId);
@@ -239,6 +240,12 @@ const App: React.FC = () => {
     if (!selectedJob || !currentUser) return;
 
     try {
+      let uploadedResumeUrl = '';
+      if (formData.resume) {
+        // Upload resume utilizing Cloudinary
+        uploadedResumeUrl = await uploadResume(formData.resume);
+      }
+
       const newApplication = {
         jobId: selectedJob.id,
         employerId: selectedJob.employerId,
@@ -251,14 +258,15 @@ const App: React.FC = () => {
         applicantEmail: formData.email,
         applicantPhone: formData.phone,
         resumeName: formData.resume ? formData.resume.name : 'resume.pdf',
+        resumeUrl: uploadedResumeUrl,
         appliedDate: new Date().toLocaleDateString(),
-        status: 'Pending',
+        status: 'Pending' as const,
         experience: 'Fresher',
         createdAt: new Date().toISOString()
       };
 
       await addDoc(collection(db, "applications"), newApplication);
-      
+
       alert("Application submitted successfully! Redirecting to My Applications.");
       navigateToView('my-applications');
       setSelectedJob(null);
@@ -276,27 +284,27 @@ const App: React.FC = () => {
       {/* DB Error Banner */}
       {dbError && (
         <div className="bg-red-600 text-white px-4 py-3 text-center z-[100] relative shadow-md">
-            <p className="font-bold flex items-center justify-center gap-2">
-               <span className="text-xl">⚠️</span> Database Connection Error
-            </p>
-            <p className="text-sm mt-1 opacity-90">{dbError}</p>
+          <p className="font-bold flex items-center justify-center gap-2">
+            <span className="text-xl">⚠️</span> Database Connection Error
+          </p>
+          <p className="text-sm mt-1 opacity-90">{dbError}</p>
         </div>
       )}
 
       {currentView !== 'login' && currentView !== 'apply-job' && (
-        <Header 
-          onNavigate={navigateToView} 
-          isLoggedIn={isLoggedIn} 
+        <Header
+          onNavigate={navigateToView}
+          isLoggedIn={isLoggedIn}
           userRole={userRole}
-          onLogout={handleLogout} 
+          onLogout={handleLogout}
         />
       )}
-      
+
       <main className="flex-grow">
         {currentView === 'home' && (
           <>
-            <HeroSection 
-              onFindJobs={() => navigateToView('jobs')} 
+            <HeroSection
+              onFindJobs={() => navigateToView('jobs')}
               onEmployerDashboard={() => navigateToView('employer-dashboard')}
               isLoggedIn={isLoggedIn}
               userRole={userRole}
@@ -305,17 +313,17 @@ const App: React.FC = () => {
             <SafetyGuaranteeSection />
           </>
         )}
-        
+
         {currentView === 'jobs' && (
-          <FindJobsSection 
-            jobs={approvedJobs} 
-            onApply={handleApplyClick} 
+          <FindJobsSection
+            jobs={approvedJobs}
+            onApply={handleApplyClick}
             onCompanyClick={handleCompanyClick}
           />
         )}
 
         {currentView === 'apply-job' && selectedJob && (
-          <JobApplicationForm 
+          <JobApplicationForm
             job={selectedJob}
             onCancel={() => navigateToView('jobs')}
             onSubmit={handleApplicationSubmit}
@@ -323,7 +331,7 @@ const App: React.FC = () => {
         )}
 
         {currentView === 'company-profile' && selectedJob && (
-          <CompanyProfilePage 
+          <CompanyProfilePage
             job={selectedJob}
             onBack={() => navigateToView('jobs')}
           />
@@ -337,32 +345,32 @@ const App: React.FC = () => {
         )}
 
         {currentView === 'employer-dashboard' && (
-          <EmployerDashboard 
+          <EmployerDashboard
             currentUser={currentUser}
           />
         )}
 
         {currentView === 'admin-dashboard' && (
-          <AdminDashboard 
+          <AdminDashboard
             currentUser={currentUser}
           />
         )}
-        
+
         {currentView === 'my-applications' && (
-          <MyApplications 
-            onBrowseJobs={() => navigateToView('jobs')} 
+          <MyApplications
+            onBrowseJobs={() => navigateToView('jobs')}
             currentUser={currentUser}
           />
         )}
 
         {currentView === 'login' && (
-          <LoginPage 
-            onNavigate={navigateToView} 
+          <LoginPage
+            onNavigate={navigateToView}
             onLoginSuccess={handleLoginSuccess}
           />
         )}
       </main>
-      
+
       {currentView !== 'login' && currentView !== 'apply-job' && currentView !== 'employer-dashboard' && currentView !== 'my-applications' && currentView !== 'admin-dashboard' && currentView !== 'company-profile' && (
         <footer className="bg-gray-50 border-t border-gray-200 py-8 mt-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">

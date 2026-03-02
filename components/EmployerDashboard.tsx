@@ -334,8 +334,8 @@ const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ currentUser }) =>
                     <button
                         onClick={() => setActiveTab('registration')}
                         className={`flex-1 py-4 px-6 text-sm font-medium text-center focus:outline-none transition-colors border-b-2 whitespace-nowrap ${activeTab === 'registration'
-                                ? 'border-blue-600 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Company Registration
@@ -344,8 +344,8 @@ const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ currentUser }) =>
                     <button
                         onClick={() => setActiveTab('post-job')}
                         className={`flex-1 py-4 px-6 text-sm font-medium text-center focus:outline-none transition-colors border-b-2 whitespace-nowrap ${activeTab === 'post-job'
-                                ? 'border-blue-600 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Post Jobs
@@ -355,8 +355,8 @@ const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ currentUser }) =>
                     <button
                         onClick={() => setActiveTab('my-jobs')}
                         className={`flex-1 py-4 px-6 text-sm font-medium text-center focus:outline-none transition-colors border-b-2 whitespace-nowrap ${activeTab === 'my-jobs'
-                                ? 'border-blue-600 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         My Posted Jobs
@@ -370,8 +370,8 @@ const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ currentUser }) =>
                     <button
                         onClick={() => setActiveTab('applications')}
                         className={`flex-1 py-4 px-6 text-sm font-medium text-center focus:outline-none transition-colors border-b-2 whitespace-nowrap ${activeTab === 'applications'
-                                ? 'border-blue-600 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Applications
@@ -425,10 +425,10 @@ const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ currentUser }) =>
                                                         placeholder="U74999DL2020PTC123456"
                                                         maxLength={21}
                                                         className={`w-full p-3 pr-24 border rounded-lg text-sm focus:outline-none focus:ring-1 transition-all uppercase bg-white font-mono tracking-wide ${verificationStatus === 'valid'
-                                                                ? 'border-green-500 focus:border-green-500 focus:ring-green-500 bg-green-50/10'
-                                                                : verificationStatus === 'invalid'
-                                                                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50/10'
-                                                                    : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
+                                                            ? 'border-green-500 focus:border-green-500 focus:ring-green-500 bg-green-50/10'
+                                                            : verificationStatus === 'invalid'
+                                                                ? 'border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50/10'
+                                                                : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
                                                             }`}
                                                         required
                                                     />
@@ -892,8 +892,8 @@ const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ currentUser }) =>
 
                                                 <div className="flex flex-col items-end gap-2">
                                                     <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${app.status === 'Shortlisted' ? 'bg-green-100 text-green-700' :
-                                                            app.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                                                                'bg-yellow-100 text-yellow-700'
+                                                        app.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                                            'bg-yellow-100 text-yellow-700'
                                                         }`}>
                                                         {app.status}
                                                     </div>
@@ -906,8 +906,8 @@ const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ currentUser }) =>
                                                         onClick={() => handleShortlist(app.id)}
                                                         disabled={app.status === 'Shortlisted'}
                                                         className={`flex-1 font-bold py-2 rounded-lg transition-colors ${app.status === 'Shortlisted'
-                                                                ? 'bg-green-600 text-white cursor-default'
-                                                                : 'bg-green-600 hover:bg-green-700 text-white'
+                                                            ? 'bg-green-600 text-white cursor-default'
+                                                            : 'bg-green-600 hover:bg-green-700 text-white'
                                                             }`}
                                                     >
                                                         {app.status === 'Shortlisted' ? 'Shortlisted' : 'Shortlist'}
@@ -1013,9 +1013,21 @@ const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ currentUser }) =>
                                 <p className="font-bold text-gray-900 mb-1">{viewingApplication.resumeName}</p>
                                 <p className="text-sm text-gray-500 mb-6">PDF Document</p>
 
-                                <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 mx-auto">
-                                    <Download size={18} /> Download Resume
-                                </button>
+                                {viewingApplication.resumeUrl ? (
+                                    <button
+                                        onClick={() => window.open(viewingApplication.resumeUrl, '_blank')}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 mx-auto"
+                                    >
+                                        <Download size={18} /> View / Download Resume
+                                    </button>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="bg-gray-300 text-gray-500 font-bold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 mx-auto cursor-not-allowed"
+                                    >
+                                        <Download size={18} /> No Resume Available
+                                    </button>
+                                )}
                             </div>
 
                             {/* Action Buttons */}
@@ -1028,8 +1040,8 @@ const EmployerDashboard: React.FC<EmployerDashboardProps> = ({ currentUser }) =>
                                         }}
                                         disabled={viewingApplication.status === 'Shortlisted'}
                                         className={`flex-1 font-bold py-3 rounded-xl transition-colors ${viewingApplication.status === 'Shortlisted'
-                                                ? 'bg-green-100 text-green-700 cursor-default'
-                                                : 'bg-green-600 text-white hover:bg-green-700 shadow-md'
+                                            ? 'bg-green-100 text-green-700 cursor-default'
+                                            : 'bg-green-600 text-white hover:bg-green-700 shadow-md'
                                             }`}
                                     >
                                         {viewingApplication.status === 'Shortlisted' ? 'Shortlisted' : 'Shortlist Candidate'}
