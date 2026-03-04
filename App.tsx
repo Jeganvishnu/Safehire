@@ -88,6 +88,17 @@ const App: React.FC = () => {
           const userDoc = await getDoc(doc(db, "users", user.uid));
           if (userDoc.exists()) {
             const userData = userDoc.data();
+
+            if (userData.isBanned) {
+              await signOut(auth);
+              alert("Your account has been banned due to policy violations.");
+              setIsLoggedIn(false);
+              setCurrentUser(null);
+              setUserRole('job-seeker');
+              setCurrentView('login');
+              return;
+            }
+
             setIsLoggedIn(true);
             setCurrentUser(user);
             setUserRole(userData.role || 'job-seeker');
@@ -137,6 +148,21 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  // --- 3. Realtime Reports Listener ---
+  const [reports, setReports] = useState<any[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, "reports"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const reportsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setReports(reportsData);
+    });
+    return () => unsubscribe();
+  }, []);
+
   // --- STRICT VIEW NAVIGATION GUARD ---
   const navigateToView = (view: typeof currentView) => {
     // 1. Admin (Super User) Access: Can go anywhere
@@ -158,9 +184,9 @@ const App: React.FC = () => {
 
     // 3. Employer Strict Access
     if (userRole === 'employer') {
-      // Employers strictly blocked from Job Seeker pages ('jobs', 'my-applications') and Admin
-      if (view === 'jobs' || view === 'my-applications') {
-        alert("Access Denied: Please login as a Job Seeker to view jobs.");
+      // Employers strictly blocked from Job Seeker pages ('my-applications') and Admin
+      if (view === 'my-applications') {
+        alert("Access Denied: Please login as a Job Seeker to view applications.");
         return;
       }
       if (view === 'admin-dashboard') {
@@ -277,7 +303,12 @@ const App: React.FC = () => {
   };
 
   // Filter jobs to only show approved ones to job seekers
-  const approvedJobs = jobs.filter(job => job.status === 'approved');
+  const companyReportCounts = reports.reduce((acc, report) => {
+    acc[report.companyName] = (acc[report.companyName] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const approvedJobs = jobs.filter(job => job.status === 'approved' && (companyReportCounts[job.companyName] || 0) < 3);
 
   return (
     <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden flex flex-col">

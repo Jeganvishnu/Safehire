@@ -17,8 +17,8 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
   };
 
   // --- Strict Visibility Logic ---
-  // 1. Find Jobs: Visible to Guest, Job Seeker, and Admin. HIDDEN for Employers.
-  const showFindJobs = !isLoggedIn || userRole === 'job-seeker' || userRole === 'admin';
+  // 1. Find Jobs: Visible to Guest, Job Seeker, Employer, and Admin.
+  const showFindJobs = true;
 
   // 2. Employer Dashboard: Visible to Employer and Admin.
   const showEmployerBoard = isLoggedIn && (userRole === 'employer' || userRole === 'admin');

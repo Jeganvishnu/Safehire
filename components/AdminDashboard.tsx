@@ -41,7 +41,7 @@ interface Report {
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
-   const [activeTab, setActiveTab] = useState<'overview' | 'verification' | 'job-review' | 'users' | 'reports' | 'settings' | 'rejected-companies'>('overview');
+   const [activeTab, setActiveTab] = useState<'overview' | 'verification' | 'job-review' | 'users' | 'reports' | 'settings' | 'rejected-companies' | 'ai-flagged'>('overview');
    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
    const [jobs, setJobs] = useState<Job[]>([]);
    const [reports, setReports] = useState<Report[]>([]);
@@ -93,7 +93,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
    // --- Derived Stats ---
    const employersVerified = jobs.filter(j => j.isVerified).length; // Rough approximation based on verified jobs
    const jobsPosted = jobs.length;
-   const flaggedJobs = jobs.filter(j => j.hasWarning || j.status === 'pending').length;
+   const isHighRisk = (job: Job) => job.description.toLowerCase().includes('payment') || job.hasWarning;
+   const flaggedJobsList = jobs.filter(j => isHighRisk(j));
+   const flaggedJobs = flaggedJobsList.length;
 
    const handleDismissReport = async (reportId: string) => {
       try {
@@ -159,6 +161,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
          console.log(`Company ${companyName} ${isApproved ? 'Approved' : 'Rejected'}`);
       } catch (error) {
          console.error("Error updating company verification:", error);
+      }
+   };
+
+   const handleBanCompanyFromReport = async (companyName: string, employerId: string) => {
+      try {
+         // Mark the employer as banned
+         if (employerId) {
+            await updateDoc(doc(db, "users", employerId), { isBanned: true });
+         }
+
+         // Reject all jobs associated with the company
+         await handleVerifyCompany(companyName, false);
+
+         // Clear all reports for this company so they disappear from the UI
+         const companyReports = reports.filter(r => r.companyName === companyName);
+         const deletePromises = companyReports.map(r => deleteDoc(doc(db, "reports", r.id)));
+         await Promise.all(deletePromises);
+
+         alert(`Company ${companyName} has been banned and its reports have been cleared.`);
+      } catch (error) {
+         console.error("Error banning company from reports:", error);
+         alert("Failed to ban company and clear reports.");
       }
    };
 
@@ -232,7 +256,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
       });
 
    const pendingJobs = jobs.filter(j => !j.status || j.status === 'pending');
-   const flaggedJobsList = jobs.filter(j => j.hasWarning);
 
    return (
       <div className="flex flex-col md:flex-row h-screen bg-gray-50 font-sans overflow-hidden">
@@ -266,6 +289,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
                <SidebarItem icon={ShieldCheck} label="Verification" id="verification" />
                <SidebarItem icon={Ban} label="Rejected Company" id="rejected-companies" />
                <SidebarItem icon={Search} label="Review" id="job-review" />
+               <SidebarItem icon={AlertTriangle} label="AI Flagged Jobs" id="ai-flagged" />
 
                {isSidebarOpen && <div className="hidden md:block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2 mt-6">Management</div>}
                <SidebarItem icon={Users} label="Users" id="users" />
@@ -297,6 +321,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
                   {activeTab === 'overview' && 'Dashboard Overview'}
                   {activeTab === 'verification' && 'Employer Verification'}
                   {activeTab === 'job-review' && 'Job Review & AI Risk'}
+                  {activeTab === 'ai-flagged' && 'AI Flagged Jobs'}
                   {activeTab === 'users' && 'User Management'}
                </h1>
                <div className="flex items-center gap-4">
@@ -427,7 +452,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
                               <AlertTriangle size={18} />
                               AI Flagged Jobs
                            </div>
-                           <span className="bg-red-200 text-red-800 text-xs px-2 py-0.5 rounded-full font-bold">{flaggedJobs} flagged</span>
+                           <div className="flex items-center gap-2">
+                              <button className="text-sm text-red-600 font-semibold hover:underline" onClick={() => setActiveTab('ai-flagged')}>View All</button>
+                              <span className="bg-red-200 text-red-800 text-xs px-2 py-0.5 rounded-full font-bold">{flaggedJobs} flagged</span>
+                           </div>
                         </div>
                         <div className="divide-y divide-gray-100">
                            {flaggedJobsList.slice(0, 3).map((job) => (
@@ -442,7 +470,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
                                     <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200">WhatsApp contact</span>
                                  </div>
                                  <div className="flex gap-2">
-                                    <button className="flex-1 py-1.5 border border-gray-200 text-gray-600 text-xs font-bold rounded hover:bg-gray-50 flex items-center justify-center gap-1">
+                                    <button onClick={() => setActiveTab('ai-flagged')} className="flex-1 py-1.5 border border-gray-200 text-gray-600 text-xs font-bold rounded hover:bg-gray-50 flex items-center justify-center gap-1">
                                        <Eye size={12} /> Review
                                     </button>
                                     <button onClick={() => handleRejectJob(job.id)} className="px-2 bg-red-500 text-white rounded hover:bg-red-600">
@@ -627,6 +655,105 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
                </div>
             )}
 
+            {/* --- AI FLAGGED JOBS TAB CONTENT --- */}
+            {activeTab === 'ai-flagged' && (
+               <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                     <div className="bg-red-50 p-6 rounded-xl shadow-sm border border-red-100 md:col-span-3 lg:col-span-1">
+                        <h3 className="text-sm font-bold text-red-800">Total Flagged Jobs</h3>
+                        <p className="text-3xl font-bold text-red-900 mt-2">
+                           {flaggedJobsList.length}
+                        </p>
+                     </div>
+                  </div>
+
+                  {/* Flagged Jobs Table */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                     <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <h2 className="text-lg font-bold text-gray-900">AI Risk Flags</h2>
+                     </div>
+
+                     {flaggedJobsList.length === 0 ? (
+                        <div className="p-12 text-center text-gray-500">
+                           <CheckCircle2 size={48} className="mx-auto text-emerald-200 mb-4" />
+                           <p className="text-lg font-medium">All clear!</p>
+                           <p className="text-sm">No high-risk jobs detected right now.</p>
+                        </div>
+                     ) : (
+                        <div className="overflow-x-auto">
+                           <table className="w-full text-left text-sm">
+                              <thead className="bg-gray-50 text-gray-500 uppercase tracking-wider">
+                                 <tr>
+                                    <th className="px-6 py-4 font-bold">Job Details</th>
+                                    <th className="px-6 py-4 font-bold">Company</th>
+                                    <th className="px-6 py-4 font-bold">Risk Factors</th>
+                                    <th className="px-6 py-4 font-bold text-right">Actions</th>
+                                 </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100">
+                                 {flaggedJobsList.map((job) => {
+                                    return (
+                                       <tr key={job.id} className="hover:bg-gray-50 transition-colors">
+                                          <td className="px-6 py-4">
+                                             <div>
+                                                <p className="font-bold text-gray-900">{job.title}</p>
+                                                <p className="text-xs text-gray-500 mt-0.5">{job.type} • {job.location}</p>
+                                             </div>
+                                          </td>
+                                          <td className="px-6 py-4">
+                                             <div>
+                                                <p className="font-semibold text-gray-700">{job.companyName}</p>
+                                             </div>
+                                          </td>
+                                          <td className="px-6 py-4">
+                                             <div className="flex flex-col gap-2">
+                                                <div>
+                                                   <RiskBadge level="High" />
+                                                </div>
+                                                <div className="flex flex-wrap gap-1">
+                                                   {job.description.toLowerCase().includes('payment') &&
+                                                      <span className="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100">Payment Mentioned</span>
+                                                   }
+                                                   {job.hasWarning &&
+                                                      <span className="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100">AI Warning Flag</span>
+                                                   }
+                                                </div>
+                                             </div>
+                                          </td>
+                                          <td className="px-6 py-4 text-right">
+                                             <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                   onClick={() => handleApproveJob(job.id)}
+                                                   className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 shadow-sm transition-all"
+                                                >
+                                                   <CheckCircle2 size={14} /> Accept
+                                                </button>
+                                                <button
+                                                   onClick={() => handleRejectJob(job.id)}
+                                                   className="flex items-center gap-1 px-3 py-1.5 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition-all"
+                                                >
+                                                   <XCircle size={14} /> Reject
+                                                </button>
+                                                <button
+                                                   onClick={() => handleBlockJob(job.id)}
+                                                   className="flex items-center justify-center p-2 text-gray-400 border border-gray-200 hover:text-white hover:bg-black hover:border-black rounded-lg transition-colors"
+                                                   title="Ban Job"
+                                                >
+                                                   <Ban size={16} /> Ban
+                                                </button>
+                                             </div>
+                                          </td>
+                                       </tr>
+                                    );
+                                 })}
+                              </tbody>
+                           </table>
+                        </div>
+                     )}
+                  </div>
+               </div>
+            )}
+
             {/* --- OTHER TABS PLACEHOLDERS --- */}
             {activeTab === 'verification' && (
                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -766,49 +893,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
                                  </td>
                               </tr>
                            ) : (
-                              reports.map((report) => (
-                                 <tr key={report.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4">
-                                       <p className="font-bold text-gray-900">{report.companyName}</p>
-                                       <p className="text-[10px] text-gray-400">ID: {report.employerId.substring(0, 8)}...</p>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                       <p className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
-                                          <Mail size={12} className="text-gray-400" /> {report.employerEmail || "N/A"}
-                                       </p>
-                                       <p className="flex items-center gap-1.5 text-xs text-gray-600">
-                                          <Phone size={12} className="text-gray-400" /> {report.employerPhone || "N/A"}
-                                       </p>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                       <div className="flex flex-col gap-1">
-                                          <span className="inline-flex w-fit items-center px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800">
-                                             {report.reason}
-                                          </span>
-                                          <span className="text-xs text-gray-400">
-                                             {new Date(report.reportedAt).toLocaleString()}
-                                          </span>
-                                       </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                       <div className="flex items-center justify-end gap-2">
-                                          <button
-                                             onClick={() => handleVerifyCompany(report.companyName, false)}
-                                             className="flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600 transition-colors"
-                                             title="Reject / Ban Company"
-                                          >
-                                             <Ban size={14} /> Ban
-                                          </button>
-                                          <button
-                                             onClick={() => handleDismissReport(report.id)}
-                                             className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded hover:bg-gray-200 transition-colors"
-                                          >
-                                             Dismiss
-                                          </button>
-                                       </div>
-                                    </td>
-                                 </tr>
-                              ))
+                              reports.map((report) => {
+                                 const reportCount = reports.filter(r => r.companyName === report.companyName).length;
+                                 return (
+                                    <tr key={report.id} className="hover:bg-gray-50">
+                                       <td className="px-6 py-4">
+                                          <p className="font-bold text-gray-900">{report.companyName}</p>
+                                          <p className="text-[10px] text-gray-400">ID: {report.employerId.substring(0, 8)}...</p>
+                                       </td>
+                                       <td className="px-6 py-4">
+                                          <p className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
+                                             <Mail size={12} className="text-gray-400" /> {report.employerEmail || "N/A"}
+                                          </p>
+                                          <p className="flex items-center gap-1.5 text-xs text-gray-600">
+                                             <Phone size={12} className="text-gray-400" /> {report.employerPhone || "N/A"}
+                                          </p>
+                                       </td>
+                                       <td className="px-6 py-4">
+                                          <div className="flex flex-col gap-1">
+                                             <span className="inline-flex w-fit items-center px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800">
+                                                {report.reason}
+                                             </span>
+                                             <span className={`inline-flex w-fit items-center px-2 py-0.5 rounded text-[10px] font-bold ${reportCount >= 3 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                Total Reports: {reportCount}
+                                             </span>
+                                             <span className="text-xs text-gray-400">
+                                                {new Date(report.reportedAt).toLocaleString()}
+                                             </span>
+                                          </div>
+                                       </td>
+                                       <td className="px-6 py-4 text-right">
+                                          <div className="flex items-center justify-end gap-2">
+                                             <button
+                                                onClick={() => handleBanCompanyFromReport(report.companyName, report.employerId)}
+                                                className="flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600 transition-colors"
+                                                title="Reject / Ban Company"
+                                             >
+                                                <Ban size={14} /> Ban
+                                             </button>
+                                             <button
+                                                onClick={() => handleDismissReport(report.id)}
+                                                className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded hover:bg-gray-200 transition-colors"
+                                             >
+                                                Dismiss
+                                             </button>
+                                          </div>
+                                       </td>
+                                    </tr>
+                                 );
+                              })
                            )}
                         </tbody>
                      </table>
