@@ -3,7 +3,9 @@ import { Shield, Lock, Mail, ArrowLeft, User, Loader2, AlertCircle, CheckCircle,
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
@@ -121,6 +123,55 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
     }
   };
 
+  const handleGoogleAuth = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      let actualRole: UserRole = activeRole;
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.isBanned) {
+          await auth.signOut();
+          throw new Error("This account has been banned due to policy violations.");
+        }
+        actualRole = userData.role as UserRole;
+      } else {
+        // Sign up with Google, save role
+        await setDoc(userDocRef, {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || user.email?.split('@')[0],
+          createdAt: new Date().toISOString(),
+          role: activeRole,
+          photoURL: user.photoURL
+        });
+      }
+
+      setSuccessMessage(`${authMode === 'login' ? 'Login' : 'Signup'} successful! Redirecting...`);
+      setTimeout(() => {
+        onLoginSuccess(actualRole);
+      }, 800);
+
+    } catch (err: any) {
+      console.error("Google Auth Error:", err);
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError("Google sign-in was cancelled.");
+      } else {
+        setError(err.message || "An unexpected error occurred during Google Sign-in.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4">
       {/* Back Link */}
@@ -156,8 +207,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
             <button
               onClick={() => setActiveRole('job-seeker')}
               className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 ${activeRole === 'job-seeker'
-                  ? 'border-gray-900 bg-gray-50 text-gray-900 shadow-sm ring-1 ring-gray-900'
-                  : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                ? 'border-gray-900 bg-gray-50 text-gray-900 shadow-sm ring-1 ring-gray-900'
+                : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
                 }`}
             >
               <User size={20} />
@@ -167,8 +218,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
             <button
               onClick={() => setActiveRole('employer')}
               className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 ${activeRole === 'employer'
-                  ? 'border-gray-900 bg-gray-50 text-gray-900 shadow-sm ring-1 ring-gray-900'
-                  : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                ? 'border-gray-900 bg-gray-50 text-gray-900 shadow-sm ring-1 ring-gray-900'
+                : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
                 }`}
             >
               <Building2 size={20} />
@@ -178,8 +229,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
             <button
               onClick={() => setActiveRole('admin')}
               className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-200 ${activeRole === 'admin'
-                  ? 'border-gray-900 bg-gray-50 text-gray-900 shadow-sm ring-1 ring-gray-900'
-                  : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                ? 'border-gray-900 bg-gray-50 text-gray-900 shadow-sm ring-1 ring-gray-900'
+                : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
                 }`}
             >
               <Settings size={20} />
@@ -282,6 +333,32 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
             className="w-full bg-[#F59E0B] hover:bg-[#D97706] text-white font-bold py-3.5 rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2 mt-2"
           >
             {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : (authMode === 'login' ? 'Sign In' : 'Create Account')}
+          </button>
+
+          {/* Social Login Separator */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500 font-medium">Or continue with</span>
+            </div>
+          </div>
+
+          {/* Google Button */}
+          <button
+            type="button"
+            onClick={handleGoogleAuth}
+            disabled={isLoading}
+            className="w-full bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-bold py-3.5 rounded-lg transition-colors shadow-sm flex items-center justify-center gap-3"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M23.766 12.2764C23.766 11.4607 23.6999 10.6406 23.5588 9.83807H12.24V14.4591H18.7217C18.4528 15.9494 17.5885 17.2678 16.323 18.1056V21.1039H20.19C22.4608 19.0139 23.766 15.9274 23.766 12.2764Z" fill="#4285F4" />
+              <path d="M12.2401 24.0008C15.4766 24.0008 18.2059 22.9382 20.1945 21.1039L16.3276 18.1055C15.2517 18.8375 13.8627 19.252 12.2445 19.252C9.11388 19.252 6.45946 17.1399 5.50705 14.3003H1.5166V17.3912C3.55371 21.4434 7.7029 24.0008 12.2401 24.0008Z" fill="#34A853" />
+              <path d="M5.50253 14.3003C5.00317 12.8099 5.00317 11.1961 5.50253 9.70575V6.61481H1.51649C-0.18551 10.0056 -0.18551 14.0004 1.51649 17.3912L5.50253 14.3003Z" fill="#FBBC04" />
+              <path d="M12.2401 4.74966C13.9509 4.7232 15.6044 5.36697 16.8434 6.54867L20.2695 3.12262C18.1001 1.0855 15.2208 -0.034466 12.2401 0.000808666C7.7029 0.000808666 3.55371 2.55822 1.5166 6.61481L5.50264 9.70575C6.45064 6.86173 9.10947 4.74966 12.2401 4.74966Z" fill="#EA4335" />
+            </svg>
+            {authMode === 'login' ? 'Sign in with Google' : 'Sign up with Google'}
           </button>
         </form>
 
