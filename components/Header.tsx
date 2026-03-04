@@ -22,10 +22,10 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
 
   // 2. Employer Dashboard: Visible to Employer and Admin.
   const showEmployerBoard = isLoggedIn && (userRole === 'employer' || userRole === 'admin');
-  
+
   // 3. My Applications: Visible to Job Seeker and Admin. HIDDEN for Employers.
   const showMyApps = isLoggedIn && (userRole === 'job-seeker' || userRole === 'admin');
-  
+
   // 4. Admin Dashboard: Visible to Admin only.
   const showAdminBoard = isLoggedIn && userRole === 'admin';
 
@@ -34,8 +34,8 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div 
-            className="flex items-center gap-2 cursor-pointer" 
+          <div
+            className="flex items-center gap-2 cursor-pointer"
             onClick={() => handleNavigate('home')}
           >
             <div className="bg-emerald-500 text-white p-1.5 rounded-lg">
@@ -48,19 +48,19 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
           </div>
 
           {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center gap-6">
-            <nav className="flex gap-6 items-center">
+          <div className="hidden lg:flex items-center gap-4 xl:gap-6">
+            <nav className="flex gap-3 xl:gap-6 items-center">
               {showFindJobs && (
-                <button 
-                  onClick={() => handleNavigate('jobs')} 
+                <button
+                  onClick={() => handleNavigate('jobs')}
                   className="text-gray-600 hover:text-emerald-600 font-medium transition-colors focus:outline-none"
                 >
                   Find Jobs
                 </button>
               )}
-              
-              <button 
-                onClick={() => handleNavigate('how-it-works')} 
+
+              <button
+                onClick={() => handleNavigate('how-it-works')}
                 className="text-gray-600 hover:text-emerald-600 font-medium transition-colors focus:outline-none"
               >
                 How It Works
@@ -69,7 +69,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
               {isLoggedIn ? (
                 <>
                   {showAdminBoard && (
-                    <button 
+                    <button
                       onClick={() => handleNavigate('admin-dashboard')}
                       className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
                     >
@@ -79,7 +79,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
                   )}
 
                   {showEmployerBoard && (
-                    <button 
+                    <button
                       onClick={() => handleNavigate('employer-dashboard')}
                       className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                     >
@@ -87,9 +87,9 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
                       Employer Dashboard
                     </button>
                   )}
-                  
+
                   {showMyApps && (
-                    <button 
+                    <button
                       onClick={() => handleNavigate('my-applications')}
                       className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                     >
@@ -98,7 +98,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
                     </button>
                   )}
 
-                  <button 
+                  <button
                     onClick={onLogout}
                     className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-red-600 transition-colors ml-2"
                   >
@@ -107,7 +107,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
                   </button>
                 </>
               ) : (
-                <button 
+                <button
                   onClick={() => handleNavigate('login')}
                   className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-6 rounded-md transition-all shadow-sm ml-2"
                 >
@@ -118,8 +118,8 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button 
+          <div className="lg:hidden">
+            <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-gray-600 hover:text-emerald-600 p-2 focus:outline-none"
             >
@@ -131,29 +131,29 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
 
       {/* Mobile Menu Dropdown */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 absolute w-full shadow-lg">
+        <div className="lg:hidden bg-white border-t border-gray-100 absolute w-full shadow-lg">
           <div className="px-4 pt-2 pb-6 space-y-2">
             {showFindJobs && (
-              <button 
-                onClick={() => handleNavigate('jobs')} 
+              <button
+                onClick={() => handleNavigate('jobs')}
                 className="block w-full text-left px-3 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md"
               >
                 Find Jobs
               </button>
             )}
-            
-            <button 
-              onClick={() => handleNavigate('how-it-works')} 
+
+            <button
+              onClick={() => handleNavigate('how-it-works')}
               className="block w-full text-left px-3 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md"
             >
               How It Works
             </button>
-            
+
             <div className="pt-2 border-t border-gray-100 mt-2">
               {isLoggedIn ? (
                 <>
-                   {showAdminBoard && (
-                    <button 
+                  {showAdminBoard && (
+                    <button
                       onClick={() => handleNavigate('admin-dashboard')}
                       className="block w-full text-left px-3 py-3 text-base font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md"
                     >
@@ -162,24 +162,24 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
                   )}
 
                   {showEmployerBoard && (
-                    <button 
+                    <button
                       onClick={() => handleNavigate('employer-dashboard')}
                       className="block w-full text-left px-3 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md"
                     >
                       Employer Dashboard
                     </button>
                   )}
-                  
+
                   {showMyApps && (
-                    <button 
+                    <button
                       onClick={() => handleNavigate('my-applications')}
                       className="block w-full text-left px-3 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md"
                     >
                       My Applications
                     </button>
                   )}
-                  
-                  <button 
+
+                  <button
                     onClick={onLogout}
                     className="block w-full text-left px-3 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-md"
                   >
@@ -187,7 +187,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
                   </button>
                 </>
               ) : (
-                <button 
+                <button
                   onClick={() => handleNavigate('login')}
                   className="block w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg text-center transition-all"
                 >

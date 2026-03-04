@@ -17,7 +17,9 @@ import {
    MoreHorizontal,
    Filter,
    Menu,
-   ChevronDown
+   ChevronDown,
+   Mail,
+   Phone
 } from 'lucide-react';
 import { collection, query, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -27,10 +29,22 @@ interface AdminDashboardProps {
    currentUser: any;
 }
 
+interface Report {
+   id: string;
+   companyName: string;
+   employerId: string;
+   employerEmail?: string;
+   employerPhone?: string;
+   reason: string;
+   reportedAt: string;
+   status: string;
+}
+
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
-   const [activeTab, setActiveTab] = useState<'overview' | 'verification' | 'job-review' | 'users' | 'reports' | 'settings'>('overview');
+   const [activeTab, setActiveTab] = useState<'overview' | 'verification' | 'job-review' | 'users' | 'reports' | 'settings' | 'rejected-companies'>('overview');
    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
    const [jobs, setJobs] = useState<Job[]>([]);
+   const [reports, setReports] = useState<Report[]>([]);
    const [totalUsers, setTotalUsers] = useState(0); // Mock or fetch if you have users collection read access
    const [loading, setLoading] = useState(true);
 
@@ -57,9 +71,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
          setTotalUsers(12450); // Fallback mock from screenshot
       });
 
+      // 3. Fetch Reports
+      const reportsQuery = query(collection(db, "reports"));
+      const unsubscribeReports = onSnapshot(reportsQuery, (snapshot) => {
+         const reportsData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+         })) as Report[];
+         // Sort descending by reportedAt
+         reportsData.sort((a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime());
+         setReports(reportsData);
+      });
+
       return () => {
          unsubscribeJobs();
          unsubscribeUsers();
+         unsubscribeReports();
       };
    }, []);
 
@@ -67,6 +94,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
    const employersVerified = jobs.filter(j => j.isVerified).length; // Rough approximation based on verified jobs
    const jobsPosted = jobs.length;
    const flaggedJobs = jobs.filter(j => j.hasWarning || j.status === 'pending').length;
+
+   const handleDismissReport = async (reportId: string) => {
+      try {
+         await deleteDoc(doc(db, "reports", reportId));
+         alert("Report marked as resolved/dismissed.");
+      } catch (err) {
+         console.error(err);
+         alert("Failed to dismiss report");
+      }
+   };
 
    // --- Actions ---
    const handleApproveJob = async (jobId: string) => {
@@ -227,6 +264,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
                {isSidebarOpen && <div className="hidden md:block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2 mt-2">Main Menu</div>}
                <SidebarItem icon={LayoutDashboard} label="Dashboard" id="overview" />
                <SidebarItem icon={ShieldCheck} label="Verification" id="verification" />
+               <SidebarItem icon={Ban} label="Rejected Company" id="rejected-companies" />
                <SidebarItem icon={Search} label="Review" id="job-review" />
 
                {isSidebarOpen && <div className="hidden md:block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2 mt-6">Management</div>}
@@ -591,9 +629,108 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
 
             {/* --- OTHER TABS PLACEHOLDERS --- */}
             {activeTab === 'verification' && (
-               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-                  <h2 className="text-xl font-bold mb-4">Full Employer Verification List</h2>
-                  <p className="text-gray-500">This view would contain the complete paginated list of all employers requiring verification.</p>
+               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                     <h2 className="text-xl font-bold text-gray-800">Employer Verification List</h2>
+                  </div>
+                  <div className="overflow-x-auto">
+                     <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-50 text-gray-500">
+                           <tr>
+                              <th className="px-6 py-3 font-medium">Company Name</th>
+                              <th className="px-6 py-3 font-medium">CIN Status</th>
+                              <th className="px-6 py-3 font-medium">Action</th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                           {uniqueCompanies.map((co, i) => (
+                              <tr key={i} className="hover:bg-gray-50">
+                                 <td className="px-6 py-4 font-medium text-gray-900">{co.name}</td>
+                                 <td className="px-6 py-4">
+                                    <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-bold ${co.status === 'Approved' ? 'bg-green-100 text-green-700' :
+                                       co.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                          'bg-yellow-100 text-yellow-700'
+                                       }`}>
+                                       {co.status}
+                                    </span>
+                                 </td>
+                                 <td className="px-6 py-4">
+                                    <div className="flex gap-2">
+                                       <button
+                                          onClick={() => handleVerifyCompany(co.name, true)}
+                                          className="px-3 py-1 bg-emerald-600 text-white text-xs font-bold rounded hover:bg-emerald-700"
+                                       >
+                                          Approve
+                                       </button>
+                                       <button
+                                          onClick={() => handleVerifyCompany(co.name, false)}
+                                          className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600"
+                                       >
+                                          Reject
+                                       </button>
+                                    </div>
+                                 </td>
+                              </tr>
+                           ))}
+                           {uniqueCompanies.length === 0 && (
+                              <tr>
+                                 <td colSpan={3} className="px-6 py-8 text-center text-gray-500">
+                                    No companies currently in the system.
+                                 </td>
+                              </tr>
+                           )}
+                        </tbody>
+                     </table>
+                  </div>
+               </div>
+            )}
+
+            {activeTab === 'rejected-companies' && (
+               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-red-50">
+                     <h2 className="text-xl font-bold text-red-800 flex items-center gap-2">
+                        <Ban size={24} /> Rejected Companies
+                     </h2>
+                  </div>
+                  <div className="overflow-x-auto">
+                     <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-50 text-gray-500">
+                           <tr>
+                              <th className="px-6 py-3 font-medium">Company Name</th>
+                              <th className="px-6 py-3 font-medium">CIN Status</th>
+                              <th className="px-6 py-3 font-medium">Action</th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                           {uniqueCompanies.filter(co => co.status === 'Rejected').length === 0 ? (
+                              <tr>
+                                 <td colSpan={3} className="px-6 py-8 text-center text-gray-500">
+                                    No rejected companies found.
+                                 </td>
+                              </tr>
+                           ) : (
+                              uniqueCompanies.filter(co => co.status === 'Rejected').map((co, i) => (
+                                 <tr key={i} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 font-medium text-gray-900">{co.name}</td>
+                                    <td className="px-6 py-4">
+                                       <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700">
+                                          Rejected
+                                       </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                       <button
+                                          onClick={() => handleVerifyCompany(co.name, true)}
+                                          className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition-colors"
+                                       >
+                                          <CheckCircle2 size={14} /> Reinstate / Approve
+                                       </button>
+                                    </td>
+                                 </tr>
+                              ))
+                           )}
+                        </tbody>
+                     </table>
+                  </div>
                </div>
             )}
 
@@ -605,9 +742,77 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) => {
             )}
 
             {activeTab === 'reports' && (
-               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-                  <h2 className="text-xl font-bold mb-4">Reports & Analytics</h2>
-                  <p className="text-gray-500">View detailed system reports, usage statistics, and analytics data.</p>
+               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                     <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800">
+                        <AlertTriangle size={24} className="text-orange-500" /> User Reports
+                     </h2>
+                  </div>
+                  <div className="overflow-x-auto">
+                     <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-50 text-gray-500">
+                           <tr>
+                              <th className="px-6 py-3 font-medium">Company details</th>
+                              <th className="px-6 py-3 font-medium">Contact Auth Details</th>
+                              <th className="px-6 py-3 font-medium">Report Information</th>
+                              <th className="px-6 py-3 font-medium text-right">Actions</th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                           {reports.length === 0 ? (
+                              <tr>
+                                 <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                    No reports found. All good!
+                                 </td>
+                              </tr>
+                           ) : (
+                              reports.map((report) => (
+                                 <tr key={report.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4">
+                                       <p className="font-bold text-gray-900">{report.companyName}</p>
+                                       <p className="text-[10px] text-gray-400">ID: {report.employerId.substring(0, 8)}...</p>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                       <p className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
+                                          <Mail size={12} className="text-gray-400" /> {report.employerEmail || "N/A"}
+                                       </p>
+                                       <p className="flex items-center gap-1.5 text-xs text-gray-600">
+                                          <Phone size={12} className="text-gray-400" /> {report.employerPhone || "N/A"}
+                                       </p>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                       <div className="flex flex-col gap-1">
+                                          <span className="inline-flex w-fit items-center px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800">
+                                             {report.reason}
+                                          </span>
+                                          <span className="text-xs text-gray-400">
+                                             {new Date(report.reportedAt).toLocaleString()}
+                                          </span>
+                                       </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                       <div className="flex items-center justify-end gap-2">
+                                          <button
+                                             onClick={() => handleVerifyCompany(report.companyName, false)}
+                                             className="flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600 transition-colors"
+                                             title="Reject / Ban Company"
+                                          >
+                                             <Ban size={14} /> Ban
+                                          </button>
+                                          <button
+                                             onClick={() => handleDismissReport(report.id)}
+                                             className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded hover:bg-gray-200 transition-colors"
+                                          >
+                                             Dismiss
+                                          </button>
+                                       </div>
+                                    </td>
+                                 </tr>
+                              ))
+                           )}
+                        </tbody>
+                     </table>
+                  </div>
                </div>
             )}
 
