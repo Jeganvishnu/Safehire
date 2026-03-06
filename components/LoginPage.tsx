@@ -5,10 +5,12 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 interface LoginPageProps {
   onNavigate: (view: 'home' | 'jobs' | 'how-it-works' | 'login') => void;
@@ -27,6 +29,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
 
   // UI State
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +45,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!captchaValue) {
+      setError("Please complete the CAPTCHA to verify you are not a robot.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -102,13 +110,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
       console.error("Auth Error:", err.code, err.message);
 
       // auth/invalid-credential is the generic error for v10+ login failures
-      if (
+      if (err.code === 'auth/invalid-email') {
+        setError("Please enter a valid email address (e.g., name@example.com).");
+      } else if (
         err.code === 'auth/invalid-credential' ||
         err.code === 'auth/user-not-found' ||
-        err.code === 'auth/wrong-password' ||
-        err.code === 'auth/invalid-email'
+        err.code === 'auth/wrong-password'
       ) {
-        setError("Invalid email or password. Please check your credentials and try again.");
+        setError("Invalid credentials. If you signed in with Google previously, your password was disabled. Use Google Sign-In or click 'Forgot password?'.");
       } else if (err.code === 'auth/email-already-in-use') {
         setError("This email is already registered. Please sign in instead.");
       } else if (err.code === 'auth/too-many-requests') {
@@ -164,9 +173,29 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
       console.error("Google Auth Error:", err);
       if (err.code === 'auth/popup-closed-by-user') {
         setError("Google sign-in was cancelled.");
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setError("Domain not authorized. Please add this URL/IP to Firebase Console > Authentication > Settings > Authorized Domains.");
       } else {
         setError(err.message || "An unexpected error occurred during Google Sign-in.");
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError("Please enter your email address in the Email field to reset your password.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setSuccessMessage("Password reset email sent! Check your inbox to set a new password.");
+    } catch (err: any) {
+      console.error("Reset Password Error:", err);
+      setError(err.message || "Failed to send reset email.");
     } finally {
       setIsLoading(false);
     }
@@ -299,7 +328,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
             <div className="flex justify-between items-center mb-1.5">
               <label className="block text-sm font-bold text-gray-700">Password</label>
               {authMode === 'login' && (
-                <button type="button" className="text-xs text-blue-600 font-semibold hover:underline">
+                <button type="button" onClick={handleResetPassword} className="text-xs text-blue-600 font-semibold hover:underline">
                   Forgot password?
                 </button>
               )}
@@ -324,6 +353,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+          </div>
+
+          {/* reCAPTCHA */}
+          <div className="flex justify-center mt-4">
+            <ReCAPTCHA
+              sitekey="6LfuYH8sAAAAAARLFiqx7-89sJxGUnP1yVCJK8ff"
+              onChange={(value) => setCaptchaValue(value)}
+            />
           </div>
 
           {/* Submit Button */}

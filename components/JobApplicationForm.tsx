@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   X
 } from 'lucide-react';
+import ReCAPTCHA from 'react-google-recaptcha';
 import type { Job } from '../App';
 
 interface JobApplicationFormProps {
@@ -34,6 +35,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job, onCancel, 
     resume: null
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -61,6 +63,10 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job, onCancel, 
     e.preventDefault();
     if (!formData.resume) {
       alert('Please upload your resume (PDF).');
+      return;
+    }
+    if (!captchaValue) {
+      alert('Please complete the CAPTCHA to verify you are not a robot.');
       return;
     }
 
@@ -205,6 +211,14 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job, onCancel, 
                   )}
                 </label>
               </div>
+            </div>
+
+            {/* reCAPTCHA */}
+            <div className="flex justify-center mt-4">
+              <ReCAPTCHA
+                sitekey="6LfuYH8sAAAAAARLFiqx7-89sJxGUnP1yVCJK8ff"
+                onChange={(value) => setCaptchaValue(value)}
+              />
             </div>
 
             {/* Submit Actions */}
