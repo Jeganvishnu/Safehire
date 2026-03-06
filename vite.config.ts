@@ -31,10 +31,12 @@ export default defineConfig(({ mode }) => {
               if (id.includes('lucide-react')) {
                 return 'lucide-react-vendor';
               }
-              if (id.includes('react') || id.includes('react-dom')) {
+              if (id.includes('react-google-recaptcha')) {
+                return 'recaptcha-vendor';
+              }
+              if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
                 return 'react-vendor';
               }
-              return 'vendor'; // all other package goes here
             }
           }
         }
