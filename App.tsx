@@ -242,7 +242,7 @@ const App: React.FC = () => {
       return;
     }
     // Strict block for employers attempting to apply
-    if (userRole === 'employer' && userRole !== 'admin') {
+    if (userRole === 'employer') {
       alert("Employers cannot apply for jobs. Please register as a Job Seeker.");
       return;
     }

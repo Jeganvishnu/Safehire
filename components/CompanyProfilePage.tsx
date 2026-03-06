@@ -189,7 +189,7 @@ const CompanyProfilePage: React.FC<CompanyProfilePageProps> = ({ job, onBack }) 
                                     </div>
                                     <p className="text-sm font-mono text-gray-900 flex items-center gap-2 font-medium">
                                         {getMaskedCIN(job.companyCin)}
-                                        <Lock size={12} className="text-gray-400" title="Partially masked" />
+                                        <span title="Partially masked"><Lock size={12} className="text-gray-400" /></span>
                                     </p>
                                     <div className="mt-2 flex items-center gap-1 text-[10px] text-blue-700">
                                         <CheckCircle2 size={10} /> Validated against MCA records
