@@ -2,8 +2,8 @@
     "name": "SafeHire India",
     "short_name": "SafeHire",
     "description": "SafeHire India is a trusted platform connecting job seekers with verified employers, ensuring a scam-free hiring experience.",
-    "id": "/?source=pwa",
-    "start_url": "/?source=pwa",
+    "id": "/",
+    "start_url": "/",
     "display": "standalone",
     "display_override": [
         "window-controls-overlay",
