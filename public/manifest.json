@@ -1,16 +1,48 @@
 {
-    "name": "SafeHire",
+    "name": "SafeHire India",
     "short_name": "SafeHire",
-    "start_url": "/",
+    "description": "SafeHire India is a trusted platform connecting job seekers with verified employers, ensuring a scam-free hiring experience.",
+    "id": "/?source=pwa",
+    "start_url": "/?source=pwa",
     "display": "standalone",
-    "background_color": "#000000",
-    "theme_color": "#ff0000",
-    "orientation": "portrait",
+    "display_override": [
+        "window-controls-overlay",
+        "standalone",
+        "minimal-ui"
+    ],
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "orientation": "portrait-primary",
+    "dir": "ltr",
+    "lang": "en-IN",
+    "scope": "/",
+    "categories": [
+        "business",
+        "productivity",
+        "lifestyle"
+    ],
     "icons": [
         {
             "src": "/SafeHire.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         }
-    ]
+    ],
+    "screenshots": [
+        {
+            "src": "/SafeHire.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "wide"
+        },
+        {
+            "src": "/SafeHire.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false
 }
