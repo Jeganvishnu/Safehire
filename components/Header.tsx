@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Shield, Menu, X, Building2, Briefcase, LogOut, LayoutDashboard } from 'lucide-react';
+import { Shield, Menu, X, Building2, Briefcase, LogOut, LayoutDashboard, User } from 'lucide-react';
 
 interface HeaderProps {
-  onNavigate: (view: 'home' | 'jobs' | 'how-it-works' | 'login' | 'employer-dashboard' | 'my-applications' | 'admin-dashboard') => void;
+  onNavigate: (view: 'home' | 'jobs' | 'how-it-works' | 'login' | 'employer-dashboard' | 'my-applications' | 'admin-dashboard' | 'profile') => void;
   isLoggedIn: boolean;
   userRole: 'job-seeker' | 'employer' | 'admin';
   onLogout: () => void;
@@ -11,7 +11,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleNavigate = (view: 'home' | 'jobs' | 'how-it-works' | 'login' | 'employer-dashboard' | 'my-applications' | 'admin-dashboard') => {
+  const handleNavigate = (view: 'home' | 'jobs' | 'how-it-works' | 'login' | 'employer-dashboard' | 'my-applications' | 'admin-dashboard' | 'profile') => {
     onNavigate(view);
     setIsMenuOpen(false);
   };
@@ -99,6 +99,14 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
                   )}
 
                   <button
+                    onClick={() => handleNavigate('profile')}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <User size={16} className="text-gray-500" />
+                    Profile
+                  </button>
+
+                  <button
                     onClick={onLogout}
                     className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-red-600 transition-colors ml-2"
                   >
@@ -178,6 +186,13 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
                       My Applications
                     </button>
                   )}
+
+                  <button
+                    onClick={() => handleNavigate('profile')}
+                    className="block w-full text-left px-3 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md"
+                  >
+                    Profile
+                  </button>
 
                   <button
                     onClick={onLogout}

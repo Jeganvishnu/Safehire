@@ -10,6 +10,7 @@ import MyApplications from './components/MyApplications';
 import AdminDashboard from './components/AdminDashboard';
 import JobApplicationForm, { ApplicationFormData } from './components/JobApplicationForm';
 import CompanyProfilePage from './components/CompanyProfilePage'; // Imported
+import UserProfile from './components/UserProfile';
 import { auth, db } from './firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, onSnapshot, addDoc, query, orderBy, getDoc, doc } from 'firebase/firestore';
@@ -59,7 +60,7 @@ export interface Application {
 }
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'home' | 'jobs' | 'how-it-works' | 'login' | 'employer-dashboard' | 'my-applications' | 'apply-job' | 'admin-dashboard' | 'company-profile'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'jobs' | 'how-it-works' | 'login' | 'employer-dashboard' | 'my-applications' | 'apply-job' | 'admin-dashboard' | 'company-profile' | 'profile'>('home');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<'job-seeker' | 'employer' | 'admin'>('job-seeker');
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -173,7 +174,7 @@ const App: React.FC = () => {
 
     // 2. Guest Access (Not Logged In)
     if (!isLoggedIn) {
-      const protectedViews = ['employer-dashboard', 'my-applications', 'admin-dashboard'];
+      const protectedViews = ['employer-dashboard', 'my-applications', 'admin-dashboard', 'profile'];
       if (protectedViews.includes(view)) {
         setCurrentView('login');
         return;
@@ -394,6 +395,13 @@ const App: React.FC = () => {
           />
         )}
 
+        {currentView === 'profile' && (
+          <UserProfile
+            currentUser={currentUser}
+            userRole={userRole}
+          />
+        )}
+
         {currentView === 'login' && (
           <LoginPage
             onNavigate={navigateToView}
@@ -402,7 +410,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {currentView !== 'login' && currentView !== 'apply-job' && currentView !== 'employer-dashboard' && currentView !== 'my-applications' && currentView !== 'admin-dashboard' && currentView !== 'company-profile' && (
+      {currentView !== 'login' && currentView !== 'apply-job' && currentView !== 'employer-dashboard' && currentView !== 'my-applications' && currentView !== 'admin-dashboard' && currentView !== 'company-profile' && currentView !== 'profile' && (
         <footer className="bg-gray-50 border-t border-gray-200 py-8 mt-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
             &copy; {new Date().getFullYear()} SafeHire India. All rights reserved.
