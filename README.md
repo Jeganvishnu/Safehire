@@ -32,7 +32,8 @@ SafeHire India is a secure, intelligent, and "100% Scam-Free" job portal platfor
 
 * **Frontend**: React (TypeScript), Vite, Tailwind CSS, Lucide React (Icons)
 * **Backend Services**: Firebase Authentication, Cloud Firestore (Database)
-* **AI Integration**: Google Gemini API (`@google/genai` or standard endpoints)
+* **File Storage & Media**: Cloudinary (used for secure, optimized uploads of job seeker resumes and profile assets)
+* **AI Integration**: OpenRouter API (DeepSeek/Gemini) for intelligent job risk assessment and parsing
 * **Security**: Google reCAPTCHA v2
 
 ## ⚙️ Running Locally
@@ -53,6 +54,10 @@ SafeHire India is a secure, intelligent, and "100% Scam-Free" job portal platfor
    VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
    VITE_FIREBASE_APP_ID=your_app_id
    GEMINI_API_KEY=your_gemini_api_key
+   VITE_OPENROUTER_API_KEY=your_openrouter_api_key
+   VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+   VITE_CLOUDINARY_API_KEY=your_cloudinary_api_key
+   VITE_CLOUDINARY_API_SECRET=your_cloudinary_api_secret
    ```
 5. **Add Localhost to Firebase Auth**: 
    Ensure your local testing URL/IP (e.g., `127.0.0.1` or `localhost`) is added in your **Firebase Console -> Authentication -> Settings -> Authorized Domains**.
