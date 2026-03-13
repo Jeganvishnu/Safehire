@@ -1,0 +1,80 @@
+# SafeHire India - Platform Flowchart
+
+This interactive flowchart visualizes the step-by-step workflows for Job Seekers, Employers, and Administrators on the SafeHire India platform.
+
+```mermaid
+graph TD
+    %% Define Styles
+    classDef userType fill:#f9f9f9,stroke:#333,stroke-width:2px,font-weight:bold;
+    classDef process fill:#e1f5fe,stroke:#03a9f4,stroke-width:1px;
+    classDef decision fill:#fff3e0,stroke:#ff9800,stroke-width:2px;
+    classDef system fill:#f3e5f5,stroke:#9c27b0,stroke-width:1px;
+    classDef danger fill:#ffebee,stroke:#f44336,stroke-width:2px;
+    classDef success fill:#e8f5e9,stroke:#4caf50,stroke-width:2px;
+
+    %% Entry Points
+    JS[("👤 Job Seeker")]:::userType
+    EM[("🏢 Employer")]:::userType
+    AD[("🛡️ Administrator")]:::userType
+
+    %% -------------------
+    %% Employer Workflow
+    %% -------------------
+    EM --> ER[1. Register / Onboard]:::process
+    ER --> AV{2. Admin Verification}:::decision
+    AV -- Rejected --> E_Ban[Account Suspended]:::danger
+    AV -- Approved --> EPJ[3. Post a New Job]:::process
+    
+    EPJ --> AI_Scan{4. AI Risk Review <br/> Gemini AI}:::system
+    AI_Scan -- High Risk / Suspicious --> Flag_Board[5. Sent to AI Flagged Jobs Board]:::process
+    AI_Scan -- Low Risk / Safe --> Job_Feed[6. Job Appears in Public Feed]:::success
+
+    Flag_Board --> Admin_Review_Job{Admin Review}:::decision
+    Admin_Review_Job -- Approve --> Job_Feed
+    Admin_Review_Job -- Reject / Ban --> E_Ban
+
+    %% -------------------
+    %% Job Seeker Workflow
+    %% -------------------
+    JS --> J_Auth[1. Sign Up / Sign In <br/> Email or Google]:::process
+    J_Auth --> J_Browse[2. Browse Verified Jobs]:::process
+    Job_Feed --> J_Browse
+    
+    J_Browse --> J_Apply[3. Apply Native <br/> Upload PDF Resume]:::process
+    J_Apply --> J_Track[4. Track Application Status]:::process
+    
+    J_Browse --> J_Report{5. Report Suspicious Job?}:::decision
+    J_Report -- "Yes (Count increments)" --> Report_Check{Total Reports >= 3?}:::decision
+    Report_Check -- Yes --> Auto_Hide[6. Auto-Hide Job from Public Feed]:::system
+    Auto_Hide --> Admin_Report_Review[7. Admin Reviews Report]:::process
+
+    %% -------------------
+    %% Admin Workflow
+    %% -------------------
+    AD --> Admin_Dash[1. Admin Dashboard]:::process
+    Admin_Dash --> AV
+    Admin_Dash --> Admin_Review_Job
+    Admin_Dash --> Admin_Report_Review
+    
+    Admin_Report_Review --> Admin_Action{Take Action}:::decision
+    Admin_Action -- "Confirm Scam" --> Global_Ban[Permanently Ban Malicious Employer]:::danger
+    Global_Ban --> Logout_Global[Instantly Logged Out Globally & Jobs Cleared]:::system
+```
+
+## How to Read the Flowchart
+
+### 🏢 Employers
+1. **Registration & Approval**: Employers must first register and be manually verified by the Administrator before they can participate.
+2. **Posting & AI Scanning**: When an employer posts a job, it is immediately scanned by the **Gemini AI Risk Review System**.
+3. **Safety Checks**: If the AI detects risky patterns (e.g., asking for money, WhatsApp contacts), it sends the job to the **AI Flagged Jobs Board** for manual admin review. If deemed safe, it goes public.
+
+### 👤 Job Seekers
+1. **Browse & Apply**: Seekers browse only the verified `Public Feed` and apply easily by uploading PDF resumes directly to the platform.
+2. **Community Moderation**: Seekers can report suspicious jobs. If a single employer receives **3 reports**, their job is **automatically hidden** and sent to the Admin for investigation.
+
+### 🛡️ Administrators
+Admin acts as the highest level of security:
+- Verifying new employers.
+- Making final decisions on AI-flagged jobs.
+- Investigating community-reported jobs.
+- Administering **Global Bans** which forcefully clear malicious jobs and instantly log out offenders across all devices.

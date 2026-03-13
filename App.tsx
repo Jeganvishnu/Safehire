@@ -412,8 +412,14 @@ const App: React.FC = () => {
 
       {currentView !== 'login' && currentView !== 'apply-job' && currentView !== 'employer-dashboard' && currentView !== 'my-applications' && currentView !== 'admin-dashboard' && currentView !== 'company-profile' && currentView !== 'profile' && (
         <footer className="bg-gray-50 border-t border-gray-200 py-8 mt-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
-            &copy; {new Date().getFullYear()} SafeHire India. All rights reserved.
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm flex flex-col items-center gap-2">
+            <p>&copy; {new Date().getFullYear()} SafeHire India. All rights reserved.</p>
+            <p>
+              For any queries, please contact us at:{' '}
+              <a href="mailto:jegan43017@gmail.com" className="text-blue-600 hover:underline">
+                jegan43017@gmail.com
+              </a>
+            </p>
           </div>
         </footer>
       )}
