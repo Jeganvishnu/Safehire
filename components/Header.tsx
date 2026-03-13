@@ -107,7 +107,11 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
                   </button>
 
                   <button
-                    onClick={onLogout}
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to log out?')) {
+                        onLogout();
+                      }
+                    }}
                     className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-red-600 transition-colors ml-2"
                   >
                     <LogOut size={16} />
@@ -195,7 +199,12 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, isLoggedIn, userRole, onLog
                   </button>
 
                   <button
-                    onClick={onLogout}
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to log out?')) {
+                        onLogout();
+                        setIsMenuOpen(false);
+                      }
+                    }}
                     className="block w-full text-left px-3 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-md"
                   >
                     Logout
