@@ -8,9 +8,10 @@ interface FindJobsSectionProps {
   jobs: Job[];
   onApply?: (jobId: string, jobTitle: string) => void;
   onCompanyClick?: (jobId: string) => void;
+  isLoggedIn?: boolean;
 }
 
-const FindJobsSection: React.FC<FindJobsSectionProps> = ({ jobs, onApply, onCompanyClick }) => {
+const FindJobsSection: React.FC<FindJobsSectionProps> = ({ jobs, onApply, onCompanyClick, isLoggedIn }) => {
   const [keyword, setKeyword] = useState('');
   const [location, setLocation] = useState('');
   const [experience, setExperience] = useState('All Experience');
@@ -99,6 +100,10 @@ const FindJobsSection: React.FC<FindJobsSectionProps> = ({ jobs, onApply, onComp
                    {bannedCompanies.length > 0 && (
                      <button
                        onClick={() => {
+                         if (!isLoggedIn) {
+                           alert('Please login or sign up to download the Banned Companies list.');
+                           return;
+                         }
                          const headers = ['Company Name', 'Status', 'Reported By', 'Reason', 'Date', 'Details'];
                          const csvContent = [
                            headers.join(','),

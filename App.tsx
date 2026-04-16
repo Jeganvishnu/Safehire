@@ -351,6 +351,7 @@ const App: React.FC = () => {
             jobs={approvedJobs}
             onApply={handleApplyClick}
             onCompanyClick={handleCompanyClick}
+            isLoggedIn={isLoggedIn}
           />
         )}
 
