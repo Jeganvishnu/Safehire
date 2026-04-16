@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Briefcase, IndianRupee, ShieldCheck, Clock, AlertTriangle, CheckCircle2, Building2, Users, Ban, Calendar, Info } from 'lucide-react';
+import { Search, MapPin, Briefcase, IndianRupee, ShieldCheck, Clock, AlertTriangle, CheckCircle2, Building2, Users, Ban, Calendar, Info, Download } from 'lucide-react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import type { Job } from '../App';
@@ -91,9 +91,43 @@ const FindJobsSection: React.FC<FindJobsSectionProps> = ({ jobs, onApply, onComp
           {/* Left Column: Banned Companies */}
           <div className="w-full lg:w-1/3 xl:w-1/4">
              <div className="bg-white rounded-xl shadow-lg border border-red-100 overflow-hidden sticky top-8">
-                <div className="bg-red-50 p-4 border-b border-red-100 flex items-center gap-2">
-                   <Ban className="text-red-600" size={20} />
-                   <h2 className="font-bold text-red-800 text-lg">Banned Companies</h2>
+                <div className="bg-red-50 p-4 border-b border-red-100 flex items-center justify-between">
+                   <div className="flex items-center gap-2">
+                     <Ban className="text-red-600" size={20} />
+                     <h2 className="font-bold text-red-800 text-lg">Banned Companies</h2>
+                   </div>
+                   {bannedCompanies.length > 0 && (
+                     <button
+                       onClick={() => {
+                         const headers = ['Company Name', 'Status', 'Reported By', 'Reason', 'Date', 'Details'];
+                         const csvContent = [
+                           headers.join(','),
+                           ...bannedCompanies.map(company =>
+                             [
+                               `"${(company.name || '').replace(/"/g, '""')}"`,
+                               `"${company.bannedBy === 'Job Seeker' ? 'Reported' : 'Banned'}"`,
+                               `"${(company.bannedBy || '').replace(/"/g, '""')}"`,
+                               `"${(company.purpose || '').replace(/"/g, '""')}"`,
+                               `"${company.date || ''}"`,
+                               `"${(company.details || '').replace(/"/g, '""')}"`
+                             ].join(',')
+                           )
+                         ].join('\n');
+                         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                         const url = URL.createObjectURL(blob);
+                         const link = document.createElement('a');
+                         link.href = url;
+                         link.setAttribute('download', 'banned_companies.csv');
+                         document.body.appendChild(link);
+                         link.click();
+                         document.body.removeChild(link);
+                       }}
+                       title="Download List"
+                       className="text-red-600 hover:bg-red-100 p-1.5 rounded-full transition-colors flex items-center justify-center"
+                     >
+                       <Download size={18} />
+                     </button>
+                   )}
                 </div>
                 <div className="p-4 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto hide-scrollbar">
                    {bannedCompanies.length === 0 && (
